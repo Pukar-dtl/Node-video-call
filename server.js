@@ -19,6 +19,20 @@ io.on("connection", (socket) => {
     console.log("message", message);
   });
 
+  socket.on("offer", (offer) => {
+    console.log("offer received from :", socket.id);
+    socket.broadcast.emit("offer", offer);
+  });
+
+  socket.on("answer", (answer) => {
+    console.log("Answer received from:", socket.id);
+
+    socket.broadcast.emit("answer", answer);
+  });
+  socket.on("ice-candidate", (candidate) => {
+    socket.broadcast.emit("candidate", candidate);
+  });
+
   socket.on("disconnect", () => {
     console.log("A user disconnected:", socket.id);
   });

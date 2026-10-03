@@ -8,8 +8,11 @@
     <h1>Video Calling App by Pukar-dtl</h1>
 
     <video id="localVideo" autoplay playsinline></video>
-
     <video id="remoteVideo" autoplay playsinline></video>
+
+    <br /><br />
+
+    <button id="callButton">Call</button>
 
     <input id="messageInput" type="text" placeholder="Enter message" />
 
@@ -21,6 +24,39 @@
       const socket = io();
       const peer = new RTCPeerConnection();
 
+      async function createOffer() {
+        const offer = await peer.createOffer();
+        await peer.setLocalDescription(offer);
+        socket.emit("offer", offer);
+      }
+
+      const callButton = document.getElementById("callButton");
+      callButton.addEventListener("click", () => {
+        createOffer();
+      });
+
+      socket.on("offer", async (offer) => {
+        console.log("Received offer");
+
+        await peer.setRemoteDescription(offer);
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+
+        socket.emit("answer", answer);
+      });
+
+      socket.on("answer", async (answer) => {
+        console.log("Received answer");
+        await peer.setRemoteDescription(answer);
+      });
+      socket.on("ice-candidate", async (candidate) => {
+        try {
+          await peer.addIceCandidate(candidate);
+          console.log("candidate added");
+        } catch (error) {
+          console.log("Ice candidate error", error);
+        }
+      });
       socket.on("connect", () => {
         console.log("Connected!");
         console.log("My socket ID:", socket.id);
@@ -35,11 +71,25 @@
 
       sendButton.addEventListener("click", () => {
         const message = messageInput.value;
-
         socket.emit("message", message);
       });
 
       const video = document.getElementById("localVideo");
+
+      peer.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit("candidate", event.candidate);
+        }
+      };
+
+      peer.onconnectionstatechange = () => {
+        console.log("connection stage", peer.connectionState);
+      };
+      const remoteVideo = document.getElementById("remoteVideo");
+      peer.ontrack = (event) => {
+        console.log("got remote track", event.track);
+        remoteVideo.srcObject = event.streams[0];
+      };
 
       async function startCamera() {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -49,8 +99,8 @@
 
         video.srcObject = stream;
 
-        stream.getTracks().forEach((track)=>{
-            peer.addTrack(track, stream);
+        stream.getTracks().forEach((track) => {
+          peer.addTrack(track, stream);
         });
       }
 

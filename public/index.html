@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Video Call App by Pukar-dtl</title>
+  </head>
+
+  <body>
+    <h1>Video Calling App by Pukar-dtl</h1>
+
+    <video id="localVideo" autoplay playsinline></video>
+
+    <video id="remoteVideo" autoplay playsinline></video>
+
+    <input id="messageInput" type="text" placeholder="Enter message" />
+
+    <button id="sendButton">Send</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+      const socket = io();
+      const peer = new RTCPeerConnection();
+
+      socket.on("connect", () => {
+        console.log("Connected!");
+        console.log("My socket ID:", socket.id);
+      });
+
+      socket.on("message", (message) => {
+        console.log("Message from another user:", message);
+      });
+
+      const messageInput = document.getElementById("messageInput");
+      const sendButton = document.getElementById("sendButton");
+
+      sendButton.addEventListener("click", () => {
+        const message = messageInput.value;
+
+        socket.emit("message", message);
+      });
+
+      const video = document.getElementById("localVideo");
+
+      async function startCamera() {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+
+        video.srcObject = stream;
+
+        stream.getTracks().forEach((track)=>{
+            peer.addTrack(track, stream);
+        });
+      }
+
+      startCamera();
+    </script>
+  </body>
+  const socket = io();
+</html>

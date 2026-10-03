@@ -20,17 +20,18 @@ io.on("connection", (socket) => {
   });
 
   socket.on("offer", (offer) => {
-    console.log("offer received from :", socket.id);
     socket.broadcast.emit("offer", offer);
   });
 
   socket.on("answer", (answer) => {
-    console.log("Answer received from:", socket.id);
-
     socket.broadcast.emit("answer", answer);
   });
+
   socket.on("ice-candidate", (candidate) => {
-    socket.broadcast.emit("candidate", candidate);
+    console.log("ICE from:", socket.id);
+    console.log(candidate.candidate);
+
+    socket.broadcast.emit("ice-candidate", candidate);
   });
 
   socket.on("disconnect", () => {
